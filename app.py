@@ -1,39 +1,38 @@
 # ==============================
-# IMPORT LIBRARIES
+# IMPORTS
 # ==============================
 import streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
-import matplotlib.pyplot as plt
 
 # ==============================
-# LOAD MODEL
+# LOAD MODEL & COLUMNS
 # ==============================
 model = pickle.load(open("student_performance_model.pkl", "rb"))
+columns = pickle.load(open("columns.pkl", "rb"))
 
-st.set_page_config(page_title="Student Performance Predictor", layout="wide")
+st.set_page_config(page_title="Student Performance Predictor")
 
 # ==============================
 # TITLE
 # ==============================
 st.title("🎓 Student Performance Predictor")
-st.write("Predict student performance using Multiple Linear Regression")
 
 # ==============================
-# USER INPUTS
+# INPUTS
 # ==============================
-st.sidebar.header("Enter Student Details")
+st.sidebar.header("Enter Details")
 
 age = st.sidebar.slider("Age", 10, 25, 18)
-study_hours = st.sidebar.slider("Study Hours per Day", 0.0, 12.0, 5.0)
-attendance = st.sidebar.slider("Attendance (%)", 0.0, 100.0, 75.0)
+study_hours = st.sidebar.slider("Study Hours", 0.0, 12.0, 5.0)
+attendance = st.sidebar.slider("Attendance %", 0.0, 100.0, 75.0)
 math_score = st.sidebar.slider("Math Score", 0.0, 100.0, 60.0)
 science_score = st.sidebar.slider("Science Score", 0.0, 100.0, 60.0)
 english_score = st.sidebar.slider("English Score", 0.0, 100.0, 60.0)
 
 # ==============================
-# INPUT DATAFRAME
+# CREATE INPUT
 # ==============================
 input_data = pd.DataFrame({
     "age": [age],
@@ -44,43 +43,35 @@ input_data = pd.DataFrame({
     "english_score": [english_score]
 })
 
-st.subheader("📥 Input Data")
+st.write("### 📥 Input Data")
 st.write(input_data)
 
 # ==============================
 # PREDICTION
 # ==============================
-if st.button("Predict Performance"):
-    try:
-        prediction = model.predict(input_data)
-        st.success(f"🎯 Predicted Performance Score: {prediction[0]:.2f}")
-    except Exception as e:
-        st.error("⚠️ Input features mismatch. Make sure model and inputs align.")
+if st.button("Predict"):
+    
+    # Create full input with all columns
+    input_full = pd.DataFrame(columns=columns)
+    input_full.loc[0] = 0
+
+    # Fill known values
+    for col in input_data.columns:
+        if col in input_full.columns:
+            input_full[col] = input_data[col].values
+
+    # Prediction
+    prediction = model.predict(input_full)
+
+    st.success(f"🎯 Predicted Performance: {prediction[0]:.2f}")
 
 # ==============================
-# OPTIONAL: SHOW METRICS (STATIC)
+# INFO
 # ==============================
-st.subheader("📊 Model Info")
+st.write("### 📊 Model Info")
 st.write("""
 - Model: Multiple Linear Regression  
-- Metrics:
-  - R² Score ≈ 0.96  
-  - MSE ≈ 0.0037  
-  - MAE ≈ very low  
+- R² Score ≈ 0.96  
+- MSE ≈ 0.0037  
+- MAE ≈ Low  
 """)
-
-# ==============================
-# OPTIONAL: SAMPLE GRAPH
-# ==============================
-st.subheader("📈 Sample Visualization")
-
-x = np.linspace(0, 10, 50)
-y = x + np.random.randn(50)
-
-plt.figure()
-plt.scatter(x, y)
-plt.xlabel("Study Hours")
-plt.ylabel("Performance")
-plt.title("Sample Trend")
-
-st.pyplot(plt)
